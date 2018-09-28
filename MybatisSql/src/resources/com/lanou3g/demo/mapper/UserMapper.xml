@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lanou3g.demo.mapper.UserMapper"><!--命名空间-->
+
+    <resultMap id="asa" type="moneyUser" extends="commons.userMap">
+        <result column="total_money" property="totalMoney"/>
+    </resultMap>
+
+    <select id="findAllWithUser" resultMap="asa">
+        select user.user_id, user.user_name, sum(item.goods_qty * goods.goods_price) as 'total_money'
+        from tb_user user
+                 left join tb_order oder on user.user_id = oder.user_id
+                 left join tb_order_item item on oder.order_id = item.order_id
+                 left join tb_goods goods on item.goods_id = goods.goods_id
+        group by user.user_id
+    </select>
+
+
+    <select id="findAllByCondition" resultMap="commons.userMap">
+        select * from tb_user where delete_flag = 0
+        <if test="userName != null">
+            and user_name like #{userName}
+        </if>
+        <if test="gender != null">
+            and gender = #{gender}
+        </if>
+        <if test="minHeight != null">
+            and height >= #{minHeught}
+        </if>
+        <if test="maxHeight != null">
+            # 小于号需要转译
+            and height &lt;= #{maxHeight}
+        </if>
+        <if test="minWeight != null">
+            and weight >= #{minWeight}
+        </if>
+        <if test="maxWeight != null">
+            # 小于号需要转译
+            and weight &lt;= #{maxWeight}
+        </if>
+        <if test="birthday">
+            and birthday = #{birthday}
+        </if>
+    </select>
+
+
+    <select id="findAll" resultMap="commons.userMap">
+        select * from tb_user
+        <where>
+            <if test="userName != null">
+                and user_name like #{userName}
+            </if>
+            <if test="gender != null">
+                and gender = #{gender}
+            </if>
+            <if test="minHeight != null">
+                and height >= #{minHeught}
+            </if>
+            <if test="maxHeight != null">
+                # 小于号需要转译
+                and height &lt;= #{maxHeight}
+            </if>
+            <if test="minWeight != null">
+                and weight >= #{minWeight}
+            </if>
+            <if test="maxWeight != null">
+                # 小于号需要转译
+                and weight &lt;= #{maxWeight}
+            </if>
+            <if test="birthday">
+                and birthday = #{birthday}
+            </if>
+        </where>
+
+    </select>
+
+    <update id="updateOne" >
+        update  tb_user
+        <set>
+            <if test="userName != null">
+                user_name = #{userName},
+            </if>
+            <if test="gender != null">
+                gender = #{gender},
+            </if>
+            <if test="height != null">
+                height = #{height},
+            </if>
+            <if test="weight != null">
+                weight = #{weight},
+            </if>
+            <if test="birthday != null">
+                birthday = #{birthday}
+            </if>
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <delete id="deleteByUserIds">
+        delete from tb_user where user_id in
+        <if test="list != null and list.size > 0">
+        <foreach collection="list" open="(" item="id" separator="," close=")">
+            <!--每个遍历需要拼接的串-->
+            #{id}
+        </foreach>
+        </if>
+        <if test="list == null or list.size == 0">
+            1 == 2
+        </if>
+    </delete>
+
+
+    <insert id="addUsers">
+        insert into tb_user (user_name,gender,height,weight,birthday,delete_flag) values
+        <foreach collection="list" open="" item="user" separator=",">
+            <!--每个遍历需要拼接的串-->
+            (#{user.userName},#{user.gender},#{user.height},#{user.weight},#{user.birthday},0)
+        </foreach>
+
+    </insert>
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lanou3g.demo.mapper.OrderMapper"><!--命名空间-->
+
+    <resultMap id="allOrderWithItemMap" type="order" extends="commons.orderMap">
+        <collection property="orderItemList" ofType="orderItem" resultMap="orderItemMap"/>
+    </resultMap>
+
+    <resultMap id="orderItemMap" type="orderItem" extends="commons.orderItemMap">
+        <association property="goods" javaType="goods" resultMap="commons.goodsMap"/>
+    </resultMap>
+
+
+    <sql id="sql-join-order-item">
+        ${a}.order_id,
+        ${a}.order_code,
+        ${b}.order_item_id,
+        ${b}.goods_qty
+
+    </sql>
+    <!--定义Sql片段-->
+    <sql id="sql-all-order">
+        select
+        <include refid="sql-join-order-item">
+            <!--为带参数的Sql片段传值-->
+            <property name="a" value="ord"/>
+            <property name="b" value="item"/>
+        </include>,
+               goods.goods_id,
+               goods.goods_name,
+               goods.goods_price
+        from tb_order ord
+                 left join tb_order_item item on ord.order_id = item.order_id
+                 left join tb_goods goods on item.goods_id = goods.goods_id
+    </sql>
+
+    <select id="findAllWithItem" resultMap="allOrderWithItemMap">
+       <include refid="sql-all-order"/>
+    </select>
+
+    <select id="findOneWithItem" resultMap="allOrderWithItemMap">
+        <!--引用sql片段的id,如果refid指定的id不在本mapper文件中,需要在前面加namespace-->
+        <include refid="sql-all-order"/>
+        where ord.order_id = #{orderId}
+    </select>
+
+
+
+    <resultMap id="allOrderWithMoneyMap" type="moneyOrder" extends="commons.orderMap">
+        <result column="total_money" property="totalMoney"/>
+    </resultMap>
+
+
+    <select id="findAllWithMoney" resultMap="allOrderWithMoneyMap">
+        select oder.order_id, oder.order_code, sum(item.goods_qty * goods.goods_price) as total_money
+        from tb_order oder
+        left join tb_order_item item on oder.order_id = item.order_id
+        left join tb_goods goods on item.goods_id = goods.goods_id
+        group by oder.order_id
+    </select>
+
+</mapper>
